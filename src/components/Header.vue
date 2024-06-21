@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import {
+  getSupportedEpNightlyVersions,
   getSupportedEpVersions,
   getSupportedTSVersions,
   getSupportedVueVersions,
 } from '@/utils/dependency'
 import type { Ref } from 'vue'
 import type { ReplStore, VersionKey } from '@/composables/store'
+import type { CascaderOption } from 'element-plus'
 
 const appVersion = import.meta.env.APP_VERSION
 const replVersion = import.meta.env.REPL_VERSION
@@ -23,14 +25,35 @@ const { store } = defineProps<{
 
 interface Version {
   text: string
-  published: Ref<string[]>
+  published: Ref<string[]> | CascaderOption[]
   active: string
 }
-
+debugger
 const versions = reactive<Record<VersionKey, Version>>({
   elementPlus: {
     text: 'Element Plus',
-    published: getSupportedEpVersions(nightly),
+    published: [
+      {
+        label: 'Element Plus',
+        value: 'Element Plus',
+        children: computed(() => {
+          return getSupportedEpVersions().value.map((version) => ({
+            label: version,
+            value: version,
+          }))
+        }),
+      },
+      // {
+      //   label: 'Element Plus Nightly',
+      //   value: 'Element Plus Nightly',
+      //   children: computed(() =>
+      //     getSupportedEpNightlyVersions().value.map((version) => ({
+      //       label: version,
+      //       value: version,
+      //     })),
+      //   ),
+      // },
+    ],
     active: store.versions.elementPlus,
   },
   vue: {
@@ -94,7 +117,14 @@ function refreshView() {
         lt-lg-hidden
       >
         <span>{{ v.text }}:</span>
+        <el-cascader
+          v-if="key === 'elementPlus'"
+          :model-value="v.active"
+          :options="v.published"
+          @update:model-value="setVersion(key, $event)"
+        />
         <el-select
+          v-else
           :model-value="v.active"
           size="small"
           fit-input-width
@@ -106,13 +136,13 @@ function refreshView() {
           </el-option>
         </el-select>
 
-        <el-checkbox
+        <!-- <el-checkbox
           v-if="key === 'elementPlus'"
           v-model="nightly"
           @change="toggleNightly"
         >
           nightly
-        </el-checkbox>
+        </el-checkbox> -->
       </div>
 
       <div flex="~ gap-4" text-lg>

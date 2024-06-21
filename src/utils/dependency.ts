@@ -86,14 +86,11 @@ export const genImportMap = (
   }
 }
 
-export const getVersions = (pkg: MaybeRef<string>) => {
-  const url = computed(
-    () => `https://data.jsdelivr.com/v1/package/npm/${unref(pkg)}`,
-  )
+export const getVersions = (pkg: string) => {
+  const url = `https://data.jsdelivr.com/v1/package/npm/${pkg}`
   return useFetch(url, {
     initialData: [],
     afterFetch: (ctx) => ((ctx.data = ctx.data.versions), ctx),
-    refetch: true,
   }).json<string[]>().data as Ref<string[]>
 }
 
@@ -113,13 +110,13 @@ export const getSupportedTSVersions = () => {
   )
 }
 
-export const getSupportedEpVersions = (nightly: MaybeRef<boolean>) => {
-  const pkg = computed(() =>
-    unref(nightly) ? '@element-plus/nightly' : 'element-plus',
+export const getSupportedEpVersions = () => {
+  const versions = getVersions('element-plus')
+  return computed(() =>
+    versions.value.filter((version) => gte(version, '1.1.0-beta.18')),
   )
-  const versions = getVersions(pkg)
-  return computed(() => {
-    if (unref(nightly)) return versions.value
-    return versions.value.filter((version) => gte(version, '1.1.0-beta.18'))
-  })
+}
+export const getSupportedEpNightlyVersions = () => {
+  const versions = getVersions('@element-plus/nightly')
+  return versions
 }
